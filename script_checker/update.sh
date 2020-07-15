@@ -1,6 +1,6 @@
 #!/bin/bash
 
-directory='//hc-ut40070c/duongnguyen/9000_utils/hieu.nguyen-trung/script_auto_checker'
+directory='<yoursever>
 version=`cat assets/version.json  | grep version | sed -e 's/\s\+//g' -e 's/"//g' -e 's/\./_/g' | awk -F: '{print $NF}'`
 name="script_auto_checker_v${version}"
 

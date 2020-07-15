@@ -9,7 +9,7 @@ list_group_package=",20200508,"
 your_input_path="$1"
 
 XLSX2CSV="/c/Python27/python.exe /c/Python27/Lib/site-packages/xlsx2csv.py "
-SUMMARY="//hc-ut40346c/NHI5HC/hieunguyen/0000_Project/001_Prj/02_JOEM/Summary_JOEM_COEM_20200501.xlsm"
+SUMMARY="//hc-ut40346c/AA/hieunguyen/0000_Project/001_Prj/02_JOEM/Summary_JOEM_COEM_20200501.xlsm"
 
 SHEET_NAME="Merged_COEM"
 

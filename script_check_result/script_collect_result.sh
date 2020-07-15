@@ -11,7 +11,7 @@ fi
 my_dir_script="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 cd ${my_dir_script}
 
-FLAG_FIND_SRC_INPUT_ADAS=$1
+FLAG_FIND_SRC_INPUT_AD=$1
 FLAG_FIND_SUMMARY=$2
 FLAG_FIND_SRC_RESULT=$3
 
@@ -20,14 +20,14 @@ rm -rf ${LOG_OUTPUT}
 touch ${LOG_OUTPUT}
 echo `date` >> ${LOG_OUTPUT}
 
-FILE_TEMP_SRC_INPUT_ADAS_FIND=".TEMP_SRC_INPUT_ADAS_FIND"
+FILE_TEMP_SRC_INPUT_AD_FIND=".TEMP_SRC_INPUT_AD_FIND"
 #NEED RUN 1ST TIME#
-if [ ${FLAG_FIND_SRC_INPUT_ADAS} -eq 1 ]
+if [ ${FLAG_FIND_SRC_INPUT_AD} -eq 1 ]
 then
-  echo "SEARCHING SRC INPUT ADAS"
-  find ${SRC_INPUT_ADAS} | grep '/target' | grep -v '/mcdc/' | grep '\.c$' > ${FILE_TEMP_SRC_INPUT_ADAS_FIND}
+  echo "SEARCHING SRC INPUT AD"
+  find ${SRC_INPUT_AD} | grep '/target' | grep -v '/mcdc/' | grep '\.c$' > ${FILE_TEMP_SRC_INPUT_AD_FIND}
 else
-  echo "MODE: NOT FIND SRC INPUT ADAS"
+  echo "MODE: NOT FIND SRC INPUT AD"
 fi
 
 #****************************************#
@@ -292,8 +292,8 @@ func_check_test_description_csv () {
     temp_dir_csv="${dir_pat}/${pat}.csv"
     text_description_csv_1=`grep '^mod' ${temp_dir_csv} | awk -F, '{print $2}' | sed 's/"//g' | awk -F/ '{print $NF}'`
 #    temp_noob_source=`echo ${dir_file_source_func} | sed 's/AD_Software_Platform/AD_Software_PLatform/g'` ## NOOB SOURCE
-#    temp_file_source=`grep -P ''${temp_noob_source}'/'${file_source_func}'$' ${FILE_TEMP_SRC_INPUT_ADAS_FIND} | grep -v '/mcdc/'`
-    temp_file_source=`grep -P ''${dir_file_source_func}'/'${file_source_func}'$' ${FILE_TEMP_SRC_INPUT_ADAS_FIND} | grep -v '/mcdc/'`
+#    temp_file_source=`grep -P ''${temp_noob_source}'/'${file_source_func}'$' ${FILE_TEMP_SRC_INPUT_AD_FIND} | grep -v '/mcdc/'`
+    temp_file_source=`grep -P ''${dir_file_source_func}'/'${file_source_func}'$' ${FILE_TEMP_SRC_INPUT_AD_FIND} | grep -v '/mcdc/'`
     if [ -z $temp_file_source ]
     then
       echo "Don't Find Source"
@@ -931,5 +931,5 @@ done
 
 rm -rf TEMP
 #rm -rf ${FILE_TEMP_SRC_RESULT_FIND}
-#rm -rf ${FILE_TEMP_SRC_INPUT_ADAS_FIND}
+#rm -rf ${FILE_TEMP_SRC_INPUT_AD_FIND}
 echo `date` >> ${LOG_OUTPUT}

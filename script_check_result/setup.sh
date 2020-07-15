@@ -18,9 +18,9 @@ export BUG_REPORT_NAME="${SHEET_NAME}_No"
 export SRC_RESULT="/d/My_Document/2_Project/Deliverables/Branches/Task00499_38"
 
 #----------------------------------------#
-# PUT YOUR INPUT LOCATION FROM NISSAN ADAS
+# PUT YOUR INPUT LOCATION FROM NISSAN AD
 #----------------------------------------#
-export SRC_INPUT_ADAS="/d/0000_Project_AA_work/38_P33A_PT1_MRD_20191101"
+export SRC_INPUT_AD="/d/0000_Project_AA_work/38_P33A_PT1_MRD_20191101"
 
 #----------------------------------------#
 # PUT YOUR Summary File
@@ -40,7 +40,7 @@ export my_list_testcase="LIST"
 
 export PRINTING=0 # MODIFY HERE IF YOU ONLY NEED NG STATUS (1: ONLY NG, 0: PRINT ALL)
 
-FLAG_FIND_SRC_INPUT_ADAS=0 # 1 : FIND 0 : SKIP
+FLAG_FIND_SRC_INPUT_AD=0 # 1 : FIND 0 : SKIP
 
 #****************************************#
 # FIND SUMMARY
@@ -71,5 +71,5 @@ export FLAG_DEBUG=0 #1:ENABLE 0:SKIP
 # START CHECKING
 #----------------------------------------#
 date
-bash ${my_dir_script}/script_collect_result.sh ${FLAG_FIND_SRC_INPUT_ADAS} ${FLAG_FIND_SUMMARY} ${FLAG_FIND_SRC_RESULT}
+bash ${my_dir_script}/script_collect_result.sh ${FLAG_FIND_SRC_INPUT_AD} ${FLAG_FIND_SUMMARY} ${FLAG_FIND_SRC_RESULT}
 date
