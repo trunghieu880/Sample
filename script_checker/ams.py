@@ -103,17 +103,17 @@ class FileTestReportXML(Base):
 
     # Function get_data: get the information in the Summary HTML file : Verdict, C0, C1, MCDC
     def get_data(self):
-        lst_header = ["status", "statement", "decision", "booleanOperandEffectivenessMasking", "booleanOperandEffectivenessUnique", "testScriptName"]
+        lst_header = ["status", "statement", "decision", "Masking", "Unique", "Name"]
         node_summary = self.get_tag("summary")
         status = {'Verdict': node_summary.attrib['status']}
         node_coverageInfo = self.get_tag("coverageInfo")[0]
 
         score = {'C0': item.text for item in node_coverageInfo if item.tag == "statement"}
         score = {**score, **{'C1': item.text for item in node_coverageInfo if item.tag == "decision"}}
-        score = {**score, **{'MCDCM': item.text for item in node_coverageInfo if item.tag == "booleanOperandEffectivenessMasking"}}
-        score = {**score, **{'MCDCU': item.text for item in node_coverageInfo if item.tag == "booleanOperandEffectivenessUnique"}}
+        score = {**score, **{'MCDCM': item.text for item in node_coverageInfo if item.tag == "Masking"}}
+        score = {**score, **{'MCDCU': item.text for item in node_coverageInfo if item.tag == "Unique"}}
 
-        testscriptname = {'testScriptName': item.text for item in self.get_tag("info") if item.tag == "testScriptName"}
+        testscriptname = {'Name': item.text for item in self.get_tag("info") if item.tag == "Name"}
 
         data = dict()
         data = {**status, **score, **testscriptname}
@@ -280,125 +280,12 @@ class FileWDoc(Base):
             }
 
         elif opt == "TYPE_A":
-            word = win32com.client.DispatchEx('Word.Application')
-            word.Visible = 0
-            word.DisplayAlerts = 0
-
-            doc = word.Documents.Open(self.doc)
-            table_infor = doc.Tables(2)
-            table_attach = doc.Tables(3)
-            table_finding = doc.Tables(4)
-            table_check_list = doc.Tables(8)
-
-
-            finding = reformat_string(table_finding.Cell(Row=2, Column=2).Range.Text)
-            impact = reformat_string(table_finding.Cell(Row=2, Column=4).Range.Text)
-            confirm_UT26 = reformat_string(table_check_list.Cell(Row=12, Column=5).Range.Text)
-
-            temp = reformat_string(table_attach.Cell(Row=7, Column=2).Range.Text)
-            [score_c0, score_c1, score_mcdc] = re.sub("^.*C0: ([0-9]+)%.*C1: ([0-9]+)%.*MCDC: ([0-9]+)%", r'\1 \2 \3', temp).split(" ")
-
-            [project_name, item_revision] = re.sub("^(.*) v(.*)", r'\1 \2', reformat_string(table_infor.Cell(Row=1, Column=4).Range.Text)).split(" ")
-
-            dict_w = {
-                'date': reformat_string(table_infor.Cell(Row=1, Column=2).Range.Text),
-                'project': project_name,
-                'ItemRevision': item_revision.replace("_", "."),
-                'review initiator': reformat_string(table_infor.Cell(Row=1, Column=6).Range.Text),
-                'effort': reformat_string(table_infor.Cell(Row=2, Column=2).Range.Text),
-                'baseline': reformat_string(table_infor.Cell(Row=2, Column=4).Range.Text),
-                'review partner' : reformat_string(table_infor.Cell(Row=2, Column=6).Range.Text),
-                'C0': score_c0,
-                'C1': score_c1,
-                'MCDC': score_mcdc,
-                'tbl_finding': {
-                    "finding": finding,
-                    "impact": impact,
-                    "confirm_UT26": confirm_UT26
-                }
-            }
-
-            doc.Close()
-            word.Quit()
-            word = None
+            pass
         else:
             dict_w = {}
             raise "BUG No Type"
 
         return dict_w
-
-class FileCoverageReasonXLS(Base):
-    def __init__(self, path):
-        super().__init__(path)
-        self.doc = str(path)
-
-    # Function update_t: update t file with the input data
-    def update(self, data):
-        excel = win32com.client.Dispatch('Excel.Application')
-        wb = excel.Workbooks.Open(self.doc)
-        excel.Visible = False
-        excel.DisplayAlerts = False
-        wb.DoNotPromptForConvert = True
-        wb.CheckCompatibility = False
-
-        score_c0 = (value(formatNumber(float(value(data.get("C0"))) * 100)) if (value(data.get("C0")) != "-" and data.get("C0") != None) else "NA")
-        score_c1 = (value(formatNumber(float(value(data.get("C1"))) * 100)) if (value(data.get("C1")) != "-" and data.get("C1") != None) else "NA")
-        score_mcdc = (value(formatNumber(float(value(data.get("MCDC"))) * 100)) if (value(data.get("MCDC")) != "-" and data.get("MCDC") != None) else "NA")
-
-        data_t = {
-            "UnitUnderTest": data.get("ItemName"),
-            "NTUserID": str(convert_name(key=data.get("Tester"), opt="id")),
-            "ExecutionDate" : datetime.datetime.now().strftime("%Y-%m-%d"),
-            "C0": score_c0,
-            "C1": score_c1,
-            "MCDCU": score_mcdc
-        }
-
-        writeData = wb.Worksheets(1)
-        # Write data here
-        infor_CoverageReasonXLS = utils.load(CONST.SETTING).get("CoverageReasonXLS")
-
-        writeData.Range(infor_CoverageReasonXLS.get("Tester")).Value = data_t.get("NTUserID")
-        writeData.Range(infor_CoverageReasonXLS.get("Date")).Value = data_t.get("ExecutionDate")
-        writeData.Range(infor_CoverageReasonXLS.get("Item_Name")).Value = data_t.get("UnitUnderTest")
-        writeData.Range(infor_CoverageReasonXLS.get("C0")).Value = data_t.get("C0")
-        writeData.Range(infor_CoverageReasonXLS.get("C1")).Value = data_t.get("C1")
-        writeData.Range(infor_CoverageReasonXLS.get("MCDC")).Value = data_t.get("MCDCU")
-
-        wb.Save()
-        wb.Close()
-        excel.Quit()
-        excel = None
-
-    # Function get_data: to get the array data with specfic key, value of the nested json
-    def get_data(self):
-        excel = win32com.client.Dispatch('Excel.Application')
-        wb = excel.Workbooks.Open(self.doc)
-
-        excel.Visible = False
-        excel.DisplayAlerts = False
-        wb.DoNotPromptForConvert = True
-        wb.CheckCompatibility = False
-
-        readData = wb.Worksheets(1)
-        allData = readData.UsedRange
-
-        infor_CoverageReasonXLS = utils.load(CONST.SETTING).get("CoverageReasonXLS")
-
-        data = {
-            "Tester": value(allData.Cells(1, 2).value),
-            "Date": value(allData.Cells(2, 2).value),
-            "Item_Name": value(allData.Cells(3, 2).value),
-            "C0": value(formatNumber(float(allData.Cells(9, 2).value))),
-            "C1": value(formatNumber(float(allData.Cells(10, 2).value))),
-            "MCDC": value(formatNumber(float(allData.Cells(11, 2).value)))
-        }
-
-        wb.Save()
-        wb.Close()
-        excel.Quit()
-        excel = None
-        return data
 
 class FileSummaryXLSX(Base):
     # Class FileSummaryXLSX
@@ -670,81 +557,6 @@ def check_information(file_test_summary_html, data, function_with_prj_name="", f
                     logger.error("Item FileWDoc {} has different C0: {}/{}; C1: {}/{}".format(data_w.get("project").replace(".c", ""), data_Walkthrough.get("C0"), score_c0,
                                                                                 data_w.get("C1"), score_c1))
 
-                if data.get("Baseline") == "" or data.get("Baseline") == "None" or data.get("Baseline") == None:
-                    temp_baseline = ""
-                else:
-                    temp_baseline = data.get("Baseline")
-
-                if not ((data_w.get("baseline") == temp_baseline) or (temp_baseline == "" and data_Walkthrough.get("baseline") == "None")):
-                    flag = False
-                    logger.error("Item FileWDoc {} has different Baseline: {} - {}".format(data_w.get("project").replace(".c", ""), data_Walkthrough.get("baseline"), temp_baseline)
-                                    )
-
-                if not (data_w.get("review partner") == convert_name(key=utils.load(CONST.SETTING, "users").get(data.get("Tester")).get("reviewer"), opt="name") \
-                    and data_w.get("review initiator") == convert_name(key=data.get("Tester"), opt="name")):
-                    flag = False
-
-                    logger.error("Item FileWDoc has different reviewer/tester {}/{} - {}/{}".format(data_w.get("review partner"), convert_name(key=utils.load(CONST.SETTING, "users").get(data.get("Tester")).get("reviewer"), opt="name"), \
-                                                                                  data_w.get("review initiator"), convert_name(key=data.get("Tester"), opt="name")
-                                                                                 )
-                                )
-
-                temp_path_test_WT = str(trim_src(data.get("ComponentName"))) + "\\Unit_tst\\" + str(data.get("TaskID")) + "\\" + data.get("ItemName").replace(".c", "")
-                path_testscript = temp_path_test_WT + "\\Test_Spec"
-                path_test_summary = temp_path_test_WT + "\\Test_Result"
-
-                if not(data_w.get('path_testscript') == path_testscript and data_Walkthrough.get('path_test_summary') == path_test_summary):
-                    flag = False
-                    logger.error("Item FileWDoc {} has wrong path: {}/{} - {}/{}".format(data_w.get("project").replace(".c", ""), data_Walkthrough.get('path_testscript'), path_testscript,
-                                                                                data_w.get('path_test_summary'), path_test_summary)
-                                )
-
-                if (data.get("OPL/Defect") == "OPL" or data.get("OPL/Defect") == "Defect"):
-                    num_OPL = check_OPL_w(file_Walkthrough)
-
-                    if not (num_OPL > 0):
-                        flag = False
-                        logger.error("Item FileWDoc {} has none OPL: {}".format(data_w.get("project").replace(".c", ""), str(num_OPL)))
-
-                    if not (data_w.get("tbl_finding").get('finding') != "/" \
-                        and data_w.get("tbl_finding").get('impact') != "/"):
-                        flag = False
-                        logger.error("Item FileWDoc {} has none comment finding/impact: {} - {}".format(data_w.get("project").replace(".c", ""), data_Walkthrough.get("tbl_finding").get('finding'),
-                                                                                    data_w.get("tbl_finding").get('impact'))
-                                    )
-
-                    if (data_w.get('C0') == "100" and data_Walkthrough.get('C1') == "100"):
-                        if not (data_w.get("tbl_finding").get('confirm_UT9').strip() == "Yes, Documented"):
-                            flag = False
-                            logger.error("Item FileWDoc {} has wrong comment confirm UT9: {} - {}".format(data_w.get("project").replace(".c", ""), data_Walkthrough.get("tbl_finding").get('confirm_UT9'),
-                                                                                        '"Yes, Documented"')
-                                        )
-                    else:
-                        if not (data_w.get("tbl_finding").get('confirm_UT9').strip() == "No, Documented"):
-                            flag = False
-                            logger.error("Item FileWDoc {} has wrong comment confirm UT9: {} - {}".format(data_w.get("project").replace(".c", ""), data_Walkthrough.get("tbl_finding").get('confirm_UT9'),
-                                                                                        '"No, Documented"')
-                                    )
-                else:
-                    num_OPL = check_OPL_w(file_Walkthrough)
-
-                    if not (num_OPL <= 0):
-                        flag = False
-                        logger.error("Item FileWDoc {} has OPL: {}".format(data_w.get("project").replace(".c", ""), str(num_OPL)))
-
-                    if not (data_w.get("tbl_finding").get('finding') == "/" \
-                        and data_w.get("tbl_finding").get('impact') == "/"):
-                        flag = False
-                        logger.error("Item FileWDoc {} has wrong comment finding/impact: {} - {}".format(data_w.get("project").replace(".c", ""), data_Walkthrough.get("tbl_finding").get('finding'),
-                                                                                    data_w.get("tbl_finding").get('impact'))
-                                    )
-
-                    if not (data_w.get("tbl_finding").get('confirm_UT9').strip() == "Yes"):
-                        flag = False
-                        logger.error("Item FileWDoc {} has wrong comment confirm UT9: {} - {}".format(data_w.get("project").replace(".c", ""), data_Walkthrough.get("tbl_finding").get('confirm_UT9'),
-                                                                                    '"Yes"')
-                                    )
-
         else:
             raise ("No sheet name")
 
@@ -823,17 +635,6 @@ def check_information_TYPE_A(path, data, opt=""):
                         flag = False
                         logger.error("ItemName {} got ItemRevision: {}/{} - {}".format(data.get("ItemName"), data_ATT.get("ClassVersion"), data_test_design.get("ItemRevision"), data.get("ItemRevision")))
 
-                # for tm_ATT in data_ATT.get("TestModuleName"):
-                #     print(tm_ATT)
-
-                if not check_exist_plt(lst_file_PLT, data_ATT.get("TestModuleName")):
-                    flag = False
-                    logger.error("ItemName {} got TestModuleName: {} - {}".format(data.get("ItemName"), data_ATT.get("TestModuleName"), lst_file_PLT))
-
-                if not (data_ATT.get("CompleteVerdict") == "Passed"):
-                    flag = False
-                    logger.error("ItemName {} got Verdict: {} - {}".format(data.get("ItemName"), data_ATT.get("CompleteVerdict"), data.get("Status Result")))
-
         score_c0 = convert_score_percentage(data.get("C0"))
         score_c1 = convert_score_percentage(data.get("C1"))
         score_mcdc = convert_score_percentage(data.get("MCDC"))
@@ -873,76 +674,6 @@ def check_information_TYPE_A(path, data, opt=""):
                         flag = False
                         logger.error("Item FileWDoc {} has wrong ItemRevision: {} - {}".format(data.get("ItemName"), data_w.get("ItemRevision"), data.get("ItemRevision")))
 
-                    if not (check_score(score_test_summary=data_w.get("C0"), score_exel=data.get("C0")) \
-                            and check_score(score_test_summary=data_w.get("C1"), score_exel=data.get("C1"))):
-                        flag = False
-                        logger.error("Item FileWDoc {} has different C0: {}/{}; C1: {}/{}".format(data_w.get("project").replace(".c", ""), data_Walkthrough.get("C0"), score_c0,
-                                                                                    data_w.get("C1"), score_c1))
-
-                    if data.get("Baseline") == "" or data.get("Baseline") == "None" or data.get("Baseline") == None:
-                        temp_baseline = ""
-                    else:
-                        temp_baseline = data.get("Baseline")
-
-                    if not ((data_w.get("baseline") == temp_baseline) or (temp_baseline == "" and data_Walkthrough.get("baseline") == "None")):
-                        flag = False
-                        logger.error("Item FileWDoc {} has different Baseline: {} - {}".format(data_w.get("project").replace(".c", ""), data_Walkthrough.get("baseline"), temp_baseline)
-                                        )
-
-                    if not (data_w.get("review partner") == convert_name(key=utils.load(CONST.SETTING, "users").get(data.get("Tester")).get("reviewer"), opt="name") \
-                        and data_w.get("review initiator") == convert_name(key=data.get("Tester"), opt="name")):
-                        flag = False
-
-                        logger.error("Item FileWDoc has different reviewer/tester {}/{} - {}/{}".format(data_w.get("review partner"), convert_name(key=utils.load(CONST.SETTING, "users").get(data.get("Tester")).get("reviewer"), opt="name"), \
-                                                                                    data_w.get("review initiator"), convert_name(key=data.get("Tester"), opt="name")
-                                                                                    )
-                                    )
-
-                    if (data.get("OPL/Defect") == "OPL" or data.get("OPL/Defect") == "Defect"):
-                        num_OPL = check_OPL_w(file_Walkthrough)
-
-                        if not (num_OPL > 0):
-                            flag = False
-                            logger.error("Item FileWDoc {} has none OPL: {}".format(data_w.get("project").replace(".c", ""), str(num_OPL)))
-
-                        if not (data_w.get("tbl_finding").get('finding') != "/" \
-                            and data_w.get("tbl_finding").get('impact') != "/"):
-                            flag = False
-                            logger.error("Item FileWDoc {} has none comment finding/impact: {} - {}".format(data_w.get("project").replace(".c", ""), data_Walkthrough.get("tbl_finding").get('finding'),
-                                                                                        data_w.get("tbl_finding").get('impact'))
-                                        )
-
-                        if (data_w.get('C0') == "100" and data_Walkthrough.get('C1') == "100"):
-                            if not (data_w.get("tbl_finding").get('confirm_UT26').strip() == "Yes, Documented"):
-                                flag = False
-                                logger.error("Item FileWDoc {} has wrong comment confirm UT26: {} - {}".format(data_w.get("project").replace(".c", ""), data_Walkthrough.get("tbl_finding").get('confirm_UT26'),
-                                                                                            '"Yes, Documented"')
-                                            )
-                        else:
-                            if not (data_w.get("tbl_finding").get('confirm_UT26').strip() == "No, Documented"):
-                                flag = False
-                                logger.error("Item FileWDoc {} has wrong comment confirm UT26: {} - {}".format(data_w.get("project").replace(".c", ""), data_Walkthrough.get("tbl_finding").get('confirm_UT26'),
-                                                                                            '"No, Documented"')
-                                        )
-                    else:
-                        num_OPL = check_OPL_w(file_Walkthrough)
-
-                        if not (num_OPL <= 0):
-                            flag = False
-                            logger.error("Item FileWDoc {} has OPL: {}".format(data_w.get("project").replace(".c", ""), str(num_OPL)))
-
-                        if not (data_w.get("tbl_finding").get('finding') == "/" \
-                            and data_w.get("tbl_finding").get('impact') == "/"):
-                            flag = False
-                            logger.error("Item FileWDoc {} has wrong comment finding/impact: {} - {}".format(data_w.get("project").replace(".c", ""), data_Walkthrough.get("tbl_finding").get('finding'),
-                                                                                        data_w.get("tbl_finding").get('impact'))
-                                        )
-
-                        if not (data_w.get("tbl_finding").get('confirm_UT26').strip() == ""):
-                            flag = False
-                            logger.error("Item FileWDoc {} has wrong comment confirm UT26: {} - {}".format(data_w.get("project").replace(".c", ""), data_Walkthrough.get("tbl_finding").get('confirm_UT26'),
-                                                                                        '""')
-                                        )
 
         return flag
     except Exception as e:

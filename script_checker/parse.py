@@ -90,28 +90,3 @@ def get_xlsx_sheets(xlsx):
         wb.close()
         return data
 
-def parse_summary_json(file, sheetname="", begin=47, end=47):
-    try:
-        result = dict()
-
-        if sheetname == "":
-            sheetname = utils.load(CONST.SETTING).get("sheetname")
-    
-        sheet_name = [str(x) for x in get_xlsx_sheets(file) if x == sheetname]
-
-        header = [h for h in get_xlsx_raw(file, sheet_name[0], begin=begin, end=begin)[0]]
-        data = get_xlsx_raw(file, sheet_name[0], begin=begin+1, end=end)
-        d_data = dict()
-        result = dict()
-        for index, d in enumerate(data):
-            d_data = dict(zip(header, d))
-            for key, val in dict(d_data).items():
-                if key is None:
-                    del d_data[key]
-            result[index + 1] = dict(d_data)
-
-    except Exception as e:
-        logger.exception(e)
-        result = {}
-    finally:
-        return dict(result)

@@ -7,25 +7,6 @@ from pathlib import Path
 import shutil
 
 logger = logging.getLogger(__name__)
-def load(path, keys=''):
-    '''Load data from json file'''
-    logger.debug("Load data from %s", Path(path).name)
-
-    def filter(data):
-        for k in keys.split('.'):
-            data = data.get(k, {}) if k != '' else data
-        return data
-    try:
-        keys = '' if keys is None else keys.strip()
-
-        with open(path, encoding='shift-jis', errors='ignore') as fp:
-            data = json.load(fp)
-    except Exception as e:
-        data = {}
-        if Path(path).is_file() is True:
-            logger.exception(e)
-    finally:
-        return filter(data)
 
 def write(data, path):
     '''Write dict to json'''
@@ -91,21 +72,6 @@ def collapse_list(lst):
     rst.append(text(lst[t], lst[i]))
 
     return ', '.join(rst)
-
-def is_simulink(path):
-    '''Check source code is Simulink model'''
-    try:
-        rst = False
-        with open(path, encoding='shift-jis', errors='ignore') as fp:
-            for line in fp.readlines()[:100]:
-                if 'Simulink model' in line:
-                    rst = True
-                    break
-    except:
-        rst = None
-    finally:
-        return rst
-
 
 def scan_files(directory, ext='.txt'):
     '''Scan all file that has extension in directory'''
